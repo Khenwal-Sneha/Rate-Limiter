@@ -40,4 +40,20 @@ public class RateLimiterService {
         // userRequestMap.remove(userId);
         return false;
     }
+
+    public int remainingReq(String userId){
+        if(!userRequestMap.containsKey(userId)){
+            return MAX_REQUESTS;
+        }
+
+        int reqCount=userRequestMap.get(userId).getRequestCount();
+        long startTime=userRequestMap.get(userId).getWindowStartTime();
+        long currentTime=System.currentTimeMillis();
+
+        if(startTime-currentTime > WINDOW_SIZE_MS){
+            return MAX_REQUESTS;
+        }
+
+        return MAX_REQUESTS-reqCount;
+    }
 }

@@ -1,27 +1,61 @@
 package com.demo.ratelimiter.controller;
 
+import com.demo.ratelimiter.response.ApiResponse;
+import com.demo.ratelimiter.service.RateLimiterService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.demo.ratelimiter.service.RateLimiterService;
-
 @RestController
 public class HelloController {
+
     private final RateLimiterService rateLimiterService;
 
-    public HelloController(RateLimiterService rateLimiterService){
-        this.rateLimiterService=rateLimiterService;
+    public HelloController(
+            RateLimiterService rateLimiterService
+    ) {
+        this.rateLimiterService = rateLimiterService;
     }
 
     @GetMapping("/api")
-    public String accessApi(@RequestParam String userId){
-        boolean allowed=rateLimiterService.allowRequest(userId);
+    public ResponseEntity<ApiResponse> accessApi(
+            @RequestParam String userId
+    ) {
 
-        if(allowed){
-            return "Request Allowed";
+        boolean allowed =
+                rateLimiterService.allowRequest(userId);
+
+        long currentTime =
+                System.currentTimeMillis();
+
+        int remRequests =
+                rateLimiterService.remainingReq(userId);
+
+        if (allowed) {
+
+            ApiResponse response =
+                    new ApiResponse(
+                            "Request Allowed",
+                            200,
+                            currentTime,
+                            remRequests
+                    );
+
+            return ResponseEntity.ok(response);
         }
 
-        return "Too Many Requests";
+        ApiResponse response =
+                new ApiResponse(
+                        "Too Many Requests",
+                        429,
+                        currentTime,
+                        remRequests
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(response);
     }
 }

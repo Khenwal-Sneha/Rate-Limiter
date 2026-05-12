@@ -1,6 +1,7 @@
 package com.demo.ratelimiter.service;
 
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Service;
 
@@ -9,9 +10,12 @@ public class RateLimiterService {
     private static final int MAX_REQUESTS=5;
     private static final long WINDOW_SIZE_MS=60*1000; //in ms
 
-    private final HashMap<String,UserRequestInfo> userRequestMap=new HashMap<>();
+    private final Map<String,UserRequestInfo> userRequestMap=new ConcurrentHashMap<>();
 
-    public boolean allowRequest(String userId){
+    public synchronized boolean allowRequest(String userId){
+        System.out.println(
+            "Processing request for user: " + userId
+        );
         long currentTime=System.currentTimeMillis();
 
         //If new user

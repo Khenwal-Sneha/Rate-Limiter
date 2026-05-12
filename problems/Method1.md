@@ -1,20 +1,19 @@
-````md
 # Rate Limiter — Complete Understanding
 
-A **Rate Limiter** is a middleware component placed before the actual API/business logic.  
+A **Rate Limiter** is a middleware component placed before the actual API/business logic.
 Its job is to decide whether an incoming request should be accepted or rejected.
 
 In simple terms:
 
-- If request count is within allowed limit → allow request
-- If limit is exceeded → reject request with `429 Too Many Requests`
+* If request count is within allowed limit → allow request
+* If limit is exceeded → reject request with `429 Too Many Requests`
 
 It is commonly used to:
 
-- prevent API abuse
-- stop brute force attacks
-- avoid server overload
-- ensure fair usage among users
+* prevent API abuse
+* stop brute force attacks
+* avoid server overload
+* ensure fair usage among users
 
 ---
 
@@ -36,7 +35,7 @@ Allowed? ---- No ---> 429 Too Many Requests
    API Server
       |
  Business Logic
-````
+```
 
 The rate limiter acts like a gatekeeper before requests reach the backend application.
 
@@ -50,7 +49,14 @@ The simplest implementation can be built using:
 * request counter
 * time window
 
+Example idea:
+
+```java
+Map<String, Integer> requestCount = new HashMap<>();
+```
+
 The key can be:
+
 * User ID
 * IP Address
 * API Key
@@ -611,6 +617,3 @@ Modern production systems usually combine:
 * token bucket/sliding window approaches
 
 to build scalable and reliable API rate limiters.
-
-```
-```

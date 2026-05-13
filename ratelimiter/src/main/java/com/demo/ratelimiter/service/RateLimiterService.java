@@ -7,9 +7,15 @@ import org.springframework.stereotype.Service;
 @Service
 public class RateLimiterService {
 
-    private static final double CAPACITY = 5;
+    @org.springframework.beans.factory.annotation.Value(
+        "${rate.limit.capacity}"
+    )
+    private double capacity;
 
-    private static final double REFILL_RATE = 1.0;
+    @org.springframework.beans.factory.annotation.Value(
+        "${rate.limit.refill-rate}"
+    )
+    private double refillRate;
 
     private final StringRedisTemplate redisTemplate;
 
@@ -20,6 +26,7 @@ public class RateLimiterService {
     }
 
     public boolean allowRequest(String userId) {
+        System.out.println("Processing request for user: "+ userId);
 
         String key = "token_bucket:" + userId;
 
@@ -40,7 +47,7 @@ public class RateLimiterService {
 
         if (tokenObj == null || refillObj == null) {
 
-            tokens = CAPACITY;
+            tokens = capacity;
             lastRefillTime = currentTime;
 
         } else {
@@ -61,10 +68,10 @@ public class RateLimiterService {
                         / 1000.0;
 
         double refillTokens =
-                elapsedSeconds * REFILL_RATE;
+                elapsedSeconds * refillRate;
 
         tokens = Math.min(
-                CAPACITY,
+                capacity,
                 tokens + refillTokens
         );
 
@@ -83,7 +90,7 @@ public class RateLimiterService {
                     "lastRefillTime",
                     String.valueOf(lastRefillTime)
             );
-
+            System.out.println("Rate limit exceeded for user: "+ userId);
             return false;
         }
 
@@ -106,6 +113,7 @@ public class RateLimiterService {
                 java.time.Duration.ofMinutes(10)
         );
 
+        System.out.println("Request Allowed: "+ userId);
         return true;
     }
 
@@ -120,7 +128,7 @@ public class RateLimiterService {
                         .get(key, "tokens");
 
         if (tokenObj == null) {
-            return (int) CAPACITY;
+            return (int) capacity;
         }
 
         return (int) Math.floor(

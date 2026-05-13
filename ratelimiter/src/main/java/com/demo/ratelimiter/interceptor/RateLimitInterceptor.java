@@ -24,7 +24,9 @@ public class RateLimitInterceptor
             HttpServletResponse response,
             Object handler
     ) throws Exception {
-
+        if (request.getMethod().equals("OPTIONS")) {
+                return true;
+        }
         String userId =
                 request.getParameter("userId");
 
@@ -38,7 +40,8 @@ public class RateLimitInterceptor
                     """
                     {
                       "status": 400,
-                      "message": "Missing userId"
+                      "message": "Missing userId",
+                      "remainingRequests": 0
                     }
                     """
             );
@@ -52,7 +55,7 @@ public class RateLimitInterceptor
 
         int remaining =
                 rateLimiterService
-                        .remainingReq(userId);
+                        .remainingRequests(userId);
 
         response.setHeader(
                 "X-Rate-Limit-Remaining",
@@ -67,7 +70,8 @@ public class RateLimitInterceptor
                     """
                     {
                       "status": 429,
-                      "message": "Too Many Requests"
+                      "message": "Too Many Requests",
+                      "remainingRequests": 0
                     }
                     """
             );

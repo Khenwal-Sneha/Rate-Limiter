@@ -1,14 +1,11 @@
-package com.example.ratelimiter.service;
+package com.demo.ratelimiter.service;
 
 public class TokenBucketInfo {
 
     private double tokens;
     private long lastRefillTime;
 
-    public TokenBucketInfo(
-            double tokens,
-            long lastRefillTime
-    ) {
+    public TokenBucketInfo(double tokens,long lastRefillTime) {
         this.tokens = tokens;
         this.lastRefillTime = lastRefillTime;
     }

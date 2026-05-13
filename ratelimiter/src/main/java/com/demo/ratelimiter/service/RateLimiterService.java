@@ -117,7 +117,7 @@ public class RateLimiterService {
         return true;
     }
 
-    public int remainingReq(
+    public int remainingRequests(
             String userId
     ) {
 

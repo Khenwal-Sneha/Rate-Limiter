@@ -30,8 +30,8 @@ public class HelloController1 {
         long currentTime =
                 System.currentTimeMillis();
 
-        int remRequests =
-                rateLimiterService.remainingReq(userId);
+        int remainingRequests =
+                rateLimiterService.remainingRequests(userId);
 
         if (allowed) {
 
@@ -40,7 +40,7 @@ public class HelloController1 {
                             "Request Allowed",
                             200,
                             currentTime,
-                            remRequests
+                            remainingRequests
                     );
 
             return ResponseEntity.ok(response);
@@ -51,7 +51,7 @@ public class HelloController1 {
                         "Too Many Requests",
                         429,
                         currentTime,
-                        remRequests
+                        remainingRequests
                 );
 
         return ResponseEntity

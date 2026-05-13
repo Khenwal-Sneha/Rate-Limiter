@@ -1,63 +1,85 @@
 package com.demo.ratelimiter.service;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
+
+import java.util.Set;
 
 @Service
 public class RateLimiterService {
-    private static final int MAX_REQUESTS=5;
-    private static final long WINDOW_SIZE_MS=60*1000; //in ms
 
-    private final Map<String,UserRequestInfo> userRequestMap=new ConcurrentHashMap<>();
+    private static final int MAX_REQUESTS = 5;
 
-    public synchronized boolean allowRequest(String userId){
-        System.out.println(
-            "Processing request for user: " + userId
-        );
-        long currentTime=System.currentTimeMillis();
+    private static final long WINDOW_SIZE_MS =
+            60 * 1000;
 
-        //If new user
-        if(!userRequestMap.containsKey(userId)){
-            userRequestMap.put(userId,new UserRequestInfo(1,currentTime));
-            return true;
-        }
+    private final StringRedisTemplate redisTemplate;
 
-        int reqCount=userRequestMap.get(userId).getRequestCount();
-        long startTime=userRequestMap.get(userId).getWindowStartTime();
-
-
-        //If window is completed
-        if(startTime-currentTime > WINDOW_SIZE_MS){
-            userRequestMap.put(userId,new UserRequestInfo(1,currentTime));
-            return true;
-        }
-
-        //If window is not completed
-        if(reqCount<MAX_REQUESTS){
-            userRequestMap.get(userId).setRequestCount(reqCount+1);
-            return true;
-        }
-
-        // If we do this then it will not be proper implementation as, if again request is sent before completion of window,then it will give true which should not be the case
-        // userRequestMap.remove(userId);
-        return false;
+    public RateLimiterService(
+            StringRedisTemplate redisTemplate
+    ) {
+        this.redisTemplate = redisTemplate;
     }
 
-    public int remainingReq(String userId){
-        if(!userRequestMap.containsKey(userId)){
-            return MAX_REQUESTS;
+    public boolean allowRequest(String userId) {
+
+        String key = "rate_limiter:" + userId;
+
+        long currentTime =
+                System.currentTimeMillis();
+
+        long windowStart =
+                currentTime - WINDOW_SIZE_MS;
+
+        ZSetOperations<String, String> zSetOps =
+                redisTemplate.opsForZSet();
+
+        zSetOps.removeRangeByScore(
+                key,
+                0,
+                windowStart
+        );
+
+        Long requestCount =
+                zSetOps.zCard(key);
+
+        if (requestCount != null &&
+                requestCount >= MAX_REQUESTS) {
+
+            return false;
         }
 
-        int reqCount=userRequestMap.get(userId).getRequestCount();
-        long startTime=userRequestMap.get(userId).getWindowStartTime();
-        long currentTime=System.currentTimeMillis();
+        zSetOps.add(
+                key,
+                String.valueOf(currentTime),
+                currentTime
+        );
 
-        if(startTime-currentTime > WINDOW_SIZE_MS){
-            return MAX_REQUESTS;
-        }
+        redisTemplate.expire(
+                key,
+                java.time.Duration.ofMinutes(1)
+        );
 
-        return MAX_REQUESTS-reqCount;
+        return true;
+    }
+
+    public int remainingReq(String userId) {
+
+        String key = "rate_limiter:" + userId;
+
+        Long requestCount =
+                redisTemplate.opsForZSet()
+                        .zCard(key);
+
+        int currentCount =
+                requestCount == null
+                        ? 0
+                        : requestCount.intValue();
+
+        return Math.max(
+                0,
+                MAX_REQUESTS - currentCount
+        );
     }
 }

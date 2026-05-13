@@ -1,18 +1,15 @@
 package com.demo.ratelimiter.service;
 
+import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
-
-import java.util.Set;
 
 @Service
 public class RateLimiterService {
 
-    private static final int MAX_REQUESTS = 5;
+    private static final double CAPACITY = 5;
 
-    private static final long WINDOW_SIZE_MS =
-            60 * 1000;
+    private static final double REFILL_RATE = 1.0;
 
     private final StringRedisTemplate redisTemplate;
 
@@ -24,62 +21,112 @@ public class RateLimiterService {
 
     public boolean allowRequest(String userId) {
 
-        String key = "rate_limiter:" + userId;
+        String key = "token_bucket:" + userId;
+
+        HashOperations<String, Object, Object> hashOps =
+                redisTemplate.opsForHash();
 
         long currentTime =
                 System.currentTimeMillis();
 
-        long windowStart =
-                currentTime - WINDOW_SIZE_MS;
+        double tokens;
+        long lastRefillTime;
 
-        ZSetOperations<String, String> zSetOps =
-                redisTemplate.opsForZSet();
+        Object tokenObj =
+                hashOps.get(key, "tokens");
 
-        zSetOps.removeRangeByScore(
-                key,
-                0,
-                windowStart
+        Object refillObj =
+                hashOps.get(key, "lastRefillTime");
+
+        if (tokenObj == null || refillObj == null) {
+
+            tokens = CAPACITY;
+            lastRefillTime = currentTime;
+
+        } else {
+
+            tokens =
+                    Double.parseDouble(
+                            tokenObj.toString()
+                    );
+
+            lastRefillTime =
+                    Long.parseLong(
+                            refillObj.toString()
+                    );
+        }
+
+        double elapsedSeconds =
+                (currentTime - lastRefillTime)
+                        / 1000.0;
+
+        double refillTokens =
+                elapsedSeconds * REFILL_RATE;
+
+        tokens = Math.min(
+                CAPACITY,
+                tokens + refillTokens
         );
 
-        Long requestCount =
-                zSetOps.zCard(key);
+        lastRefillTime = currentTime;
 
-        if (requestCount != null &&
-                requestCount >= MAX_REQUESTS) {
+        if (tokens < 1) {
+
+            hashOps.put(
+                    key,
+                    "tokens",
+                    String.valueOf(tokens)
+            );
+
+            hashOps.put(
+                    key,
+                    "lastRefillTime",
+                    String.valueOf(lastRefillTime)
+            );
 
             return false;
         }
 
-        zSetOps.add(
+        tokens -= 1;
+
+        hashOps.put(
                 key,
-                String.valueOf(currentTime),
-                currentTime
+                "tokens",
+                String.valueOf(tokens)
+        );
+
+        hashOps.put(
+                key,
+                "lastRefillTime",
+                String.valueOf(lastRefillTime)
         );
 
         redisTemplate.expire(
                 key,
-                java.time.Duration.ofMinutes(1)
+                java.time.Duration.ofMinutes(10)
         );
 
         return true;
     }
 
-    public int remainingReq(String userId) {
+    public int remainingReq(
+            String userId
+    ) {
 
-        String key = "rate_limiter:" + userId;
+        String key = "token_bucket:" + userId;
 
-        Long requestCount =
-                redisTemplate.opsForZSet()
-                        .zCard(key);
+        Object tokenObj =
+                redisTemplate.opsForHash()
+                        .get(key, "tokens");
 
-        int currentCount =
-                requestCount == null
-                        ? 0
-                        : requestCount.intValue();
+        if (tokenObj == null) {
+            return (int) CAPACITY;
+        }
 
-        return Math.max(
-                0,
-                MAX_REQUESTS - currentCount
+        return (int) Math.floor(
+                Double.parseDouble(
+                        tokenObj.toString()
+                )
         );
     }
 }

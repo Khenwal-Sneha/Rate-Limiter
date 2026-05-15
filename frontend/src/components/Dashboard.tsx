@@ -45,6 +45,7 @@ function Dashboard() {
     }
 
     const apiMetrics = useUserMetrics(userId)
+    
 
     const metrics = apiMetrics ?? emptyMetrics
 
@@ -59,10 +60,18 @@ function Dashboard() {
 
                 {/* HEADER */}
                 <div className="mb-8">
-                    <h1 className="text-2xl md:text-3xl font-bold text-slate-800">
-                        Rate Limiter Dashboard
-                    </h1>
-                </div>
+
+    <h1 className="text-2xl md:text-3xl font-bold text-slate-800">
+        Rate Limiter Dashboard
+    </h1>
+
+    {userId.trim() === "" && (
+        <p className="mt-2 text-sm text-slate-500 bg-white/40 inline-block px-3 py-1 rounded-md backdrop-blur">
+            ⚠ Enter a User ID to start sending requests and viewing analytics
+        </p>
+    )}
+
+</div>
 
                 {/* MAIN GRID */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

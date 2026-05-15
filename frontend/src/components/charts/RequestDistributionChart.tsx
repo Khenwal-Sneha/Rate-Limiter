@@ -6,6 +6,9 @@ import {
     Cell
 } from "recharts"
 
+import { useRef, useState } from "react"
+import { toPng } from "html-to-image"
+
 import type { UserMetrics } from "../../types/UserMetrics"
 
 interface Props {
@@ -13,6 +16,10 @@ interface Props {
 }
 
 function RequestDistributionChart({ metrics }: Props) {
+
+    const chartRef = useRef<HTMLDivElement>(null)
+
+    const [downloading, setDownloading] = useState(false)
 
     const data = [
         {
@@ -25,75 +32,108 @@ function RequestDistributionChart({ metrics }: Props) {
         }
     ]
 
-    const COLORS = [
-        "url(#allowedGradient)",
-        "url(#blockedGradient)"
-    ]
+    const COLORS = ["#22c55e", "#ef4444"]
+
+    const downloadImage = async () => {
+
+        if (!chartRef.current) return
+
+        try {
+            setDownloading(true)
+
+            const dataUrl = await toPng(chartRef.current)
+
+            const link = document.createElement("a")
+
+            link.download = "request-distribution.png"
+
+            link.href = dataUrl
+
+            link.click()
+
+        } finally {
+            setDownloading(false)
+        }
+    }
 
     return (
-        <div className="
-            bg-white
-            mt-8
-            p-6
-            rounded-2xl
-            shadow-lg
-            h-[400px]
-        ">
+        <div
+            ref={chartRef}
+            className="
+                bg-white
+                mt-8
+                p-6
+                rounded-2xl
+                shadow-lg
+                h-[400px]
+                flex
+                flex-col
+            "
+        >
 
-            <h2 className="
-                text-xl
-                font-bold
-                mb-4
-                text-slate-800
-            ">
-                Request Distribution
-            </h2>
+            {/* HEADER */}
+            <div className="flex justify-between items-center mb-4">
 
-            <ResponsiveContainer width="100%" height="100%">
+                <h2 className="text-xl font-bold text-slate-800">
+                    Request Distribution
+                </h2>
 
-                <PieChart>
+                <button
+                    onClick={downloadImage}
+                    disabled={downloading}
+                    className={`
+                        px-3 py-1 rounded-md text-white transition
+                        ${downloading
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-blue-500 hover:bg-blue-600"
+                        }
+                    `}
+                >
+                    {downloading ? "Downloading..." : "Download"}
+                </button>
 
-                    {/* Gradients */}
-                    <defs>
-                        <linearGradient id="allowedGradient" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stopColor="#4ade80" />
-                            <stop offset="100%" stopColor="#16a34a" />
-                        </linearGradient>
+            </div>
 
-                        <linearGradient id="blockedGradient" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stopColor="#fb7185" />
-                            <stop offset="100%" stopColor="#e11d48" />
-                        </linearGradient>
-                    </defs>
+            {/* CHART */}
+            <div className="flex-1">
 
-                    <Pie
-                        data={data}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={70}
-                        outerRadius={110}
-                        paddingAngle={5}
-                        stroke="white"
-                        strokeWidth={3}
-                    >
-                        {data.map((_, index) => (
-                            <Cell key={index} fill={COLORS[index]} />
-                        ))}
-                    </Pie>
+                <ResponsiveContainer width="100%" height="100%">
 
-                    <Tooltip
-                        contentStyle={{
-                            backgroundColor: "white",
-                            borderRadius: "12px",
-                            border: "1px solid #e5e7eb"
-                        }}
-                    />
+                    <PieChart>
 
-                </PieChart>
+                        <Pie
+                            data={data}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={70}
+                            outerRadius={110}
+                            paddingAngle={5}
+                            stroke="white"
+                            strokeWidth={3}
+                        >
+                            {data.map((_, index) => (
+                                <Cell
+                                    key={index}
+                                    fill={COLORS[index]}
+                                />
+                            ))}
+                        </Pie>
 
-            </ResponsiveContainer>
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: "white",
+                                borderRadius: "12px",
+                                border: "1px solid #e5e7eb"
+                            }}
+                        />
+
+                    </PieChart>
+
+                </ResponsiveContainer>
+
+            </div>
 
         </div>
     )

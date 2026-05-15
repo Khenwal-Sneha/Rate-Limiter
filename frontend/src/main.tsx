@@ -1,8 +1,5 @@
 import React from "react"
 import ReactDOM from "react-dom/client"
-import {
-  ThemeProvider
-} from "./context/ThemeContext"
 
 import App from "./App"
 
@@ -19,11 +16,7 @@ ReactDOM.createRoot(
 
         <Toaster position="top-right" />
 
-        <ThemeProvider>
-
-    <App />
-
-</ThemeProvider>
+        <App />
 
     </React.StrictMode>
 )

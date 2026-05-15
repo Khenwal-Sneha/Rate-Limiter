@@ -1,6 +1,9 @@
 import { useState } from "react"
 import { type RequestHistory as HistoryType } from "../types/RequestHistory"
 
+import * as XLSX from "xlsx"
+import { saveAs } from "file-saver"
+
 interface Props {
     history: HistoryType[]
 }
@@ -8,6 +11,7 @@ interface Props {
 function RequestHistory({ history }: Props) {
 
     const [showAll, setShowAll] = useState(false)
+    const [downloading, setDownloading] = useState(false)
 
     const getStatusStyle = (status: number) => {
         if (status === 200) return "bg-green-100 text-green-700"
@@ -17,13 +21,72 @@ function RequestHistory({ history }: Props) {
 
     const preview = history.slice(0, 6)
 
+    const downloadExcel = async () => {
+
+        try {
+            setDownloading(true)
+
+            const worksheetData = history.map(item => ({
+                UserId: item.userId,
+                Status: item.status,
+                Message: item.message,
+                Timestamp: new Date(item.timestamp).toLocaleString()
+            }))
+
+            const worksheet = XLSX.utils.json_to_sheet(worksheetData)
+
+            const workbook = XLSX.utils.book_new()
+
+            XLSX.utils.book_append_sheet(
+                workbook,
+                worksheet,
+                "Request History"
+            )
+
+            const excelBuffer = XLSX.write(workbook, {
+                bookType: "xlsx",
+                type: "array"
+            })
+
+            const blob = new Blob([excelBuffer], {
+                type: "application/octet-stream"
+            })
+
+            saveAs(blob, "request-history.xlsx")
+
+        } finally {
+            setDownloading(false)
+        }
+    }
+
     return (
         <div className="mt-10">
 
             {/* Header */}
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                Request Activity
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+
+                <h2 className="text-lg font-semibold text-gray-800">
+                    Request Activity
+                </h2>
+
+                {/* DOWNLOAD BUTTON */}
+                {history.length > 0 && (
+                    <button
+                        onClick={downloadExcel}
+                        disabled={downloading}
+                        className={`
+                            px-3 py-1 rounded-md text-white transition
+                            ${downloading
+                                ? "bg-gray-400 cursor-not-allowed"
+                                : "bg-green-600 hover:bg-green-700"
+                            }
+                        `}
+                    >
+                        {downloading ? "Exporting..." : "Download Excel"}
+                    </button>
+                )}
+
+            </div>
 
             {/* Card */}
             <div className="
@@ -56,9 +119,10 @@ function RequestHistory({ history }: Props) {
                                     transition
                                 "
                             >
-                                {/* Left */}
                                 <div className="flex flex-col gap-1">
+
                                     <div className="flex items-center gap-3">
+
                                         <span className="font-medium text-gray-800">
                                             {item.userId}
                                         </span>
@@ -69,17 +133,19 @@ function RequestHistory({ history }: Props) {
                                         `}>
                                             {item.status}
                                         </span>
+
                                     </div>
 
                                     <p className="text-sm text-gray-500 truncate max-w-md">
                                         {item.message}
                                     </p>
+
                                 </div>
 
-                                {/* Right */}
                                 <div className="text-xs text-gray-400 whitespace-nowrap">
                                     {new Date(item.timestamp).toLocaleTimeString()}
                                 </div>
+
                             </div>
                         ))}
 
@@ -131,6 +197,7 @@ function RequestHistory({ history }: Props) {
                             p-5
                             border-b border-gray-200/60
                         ">
+
                             <h2 className="text-lg font-semibold text-gray-800">
                                 Full Request History
                             </h2>
@@ -141,6 +208,7 @@ function RequestHistory({ history }: Props) {
                             >
                                 ✕
                             </button>
+
                         </div>
 
                         {/* Modal Body */}
@@ -156,8 +224,11 @@ function RequestHistory({ history }: Props) {
                                         transition
                                     "
                                 >
+
                                     <div>
+
                                         <div className="flex gap-3 items-center">
+
                                             <span className="font-medium text-gray-800">
                                                 {item.userId}
                                             </span>
@@ -168,22 +239,26 @@ function RequestHistory({ history }: Props) {
                                             `}>
                                                 {item.status}
                                             </span>
+
                                         </div>
 
                                         <p className="text-sm text-gray-500">
                                             {item.message}
                                         </p>
+
                                     </div>
 
                                     <span className="text-xs text-gray-400 whitespace-nowrap">
                                         {new Date(item.timestamp).toLocaleTimeString()}
                                     </span>
+
                                 </div>
                             ))}
 
                         </div>
 
                     </div>
+
                 </div>
             )}
 

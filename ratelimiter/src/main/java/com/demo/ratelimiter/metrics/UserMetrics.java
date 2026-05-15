@@ -1,5 +1,7 @@
 package com.demo.ratelimiter.metrics;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class UserMetrics {
@@ -7,6 +9,10 @@ public class UserMetrics {
     private long totalAllowedRequests;
 
     private long totalBlockedRequests;
+
+    private final List<RequestEvent>
+            requestEvents =
+            new ArrayList<>();
 
     private final ConcurrentHashMap<
             String,
@@ -20,6 +26,8 @@ public class UserMetrics {
     ) {
 
         totalAllowedRequests++;
+
+        addRequestEvent(true);
 
         strategyMetrics.putIfAbsent(
                 algorithm,
@@ -38,6 +46,8 @@ public class UserMetrics {
 
         totalBlockedRequests++;
 
+        addRequestEvent(false);
+
         strategyMetrics.putIfAbsent(
                 algorithm,
                 new StrategyMetrics()
@@ -48,14 +58,36 @@ public class UserMetrics {
                 .incrementBlocked();
     }
 
-    public long getTotalAllowedRequests() {
+    public synchronized void
+    addRequestEvent(
+            boolean allowed
+    ) {
+
+        requestEvents.add(
+
+                new RequestEvent(
+                        System.currentTimeMillis(),
+                        allowed
+                )
+        );
+    }
+
+    public long
+    getTotalAllowedRequests() {
 
         return totalAllowedRequests;
     }
 
-    public long getTotalBlockedRequests() {
+    public long
+    getTotalBlockedRequests() {
 
         return totalBlockedRequests;
+    }
+
+    public List<RequestEvent>
+    getRequestEvents() {
+
+        return requestEvents;
     }
 
     public ConcurrentHashMap<

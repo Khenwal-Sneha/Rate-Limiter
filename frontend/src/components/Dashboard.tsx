@@ -1,160 +1,145 @@
 import { useState } from "react"
 
-import UserInput
-    from "./UserInput"
+import UserInput from "./UserInput"
+import ResponseCard from "./ResponseCard"
+import RequestHistory from "./RequestHistory"
+import LoadingSpinner from "./LoadingSpinner"
+import StatsCard from "./StatsCard"
+import AlgorithmSelector from "./AlgorithmSelector"
+import ThemeToggle from "./ThemeToggle"
 
-import ResponseCard
-    from "./ResponseCard"
+import OverviewCards from "./metrics/OverviewCards"
+import StrategyComparisonChart from "./charts/StrategyComparisonChart"
+import RequestDistributionChart from "./charts/RequestDistributionChart"
+import RequestTimelineChart from "./charts/RequestTimelineChart"
 
-import RequestHistory
-    from "./RequestHistory"
+import { useRateLimiter } from "../hooks/useRateLimiter"
+import { useUserMetrics } from "../hooks/useUserMetrics"
 
-import LoadingSpinner
-    from "./LoadingSpinner"
+import type { AlgorithmType } from "../types/AlgorithmType"
 
-import {
-    useRateLimiter
-} from "../hooks/useRateLimiter"
-
-import StatsCard
-    from "./StatsCard"
-
-import AlgorithmSelector
-    from "./AlgorithmSelector"
-
-import ThemeToggle
-    from "./ThemeToggle"
-
-import type {
-    AlgorithmType
-} from "../types/AlgorithmType"
 function Dashboard() {
-    const [
-        selectedAlgorithm,
-        setSelectedAlgorithm
-    ] = useState<AlgorithmType>(
-        "TOKEN_BUCKET"
-    )
-    const [userId, setUserId] =
-        useState("")
+
+    const [selectedAlgorithm, setSelectedAlgorithm] =
+        useState<AlgorithmType>("TOKEN_BUCKET")
+
+    const [userId, setUserId] = useState("")
 
     const {
-
         message,
         status,
         remainingRequests,
         loading,
         history,
         sendRequest
-
     } = useRateLimiter()
 
-    const handleRequest = () => {
+    const metrics = useUserMetrics(userId)
 
-        sendRequest(userId,selectedAlgorithm)
+    const handleRequest = () => {
+        sendRequest(userId, selectedAlgorithm)
     }
 
     return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4 md:p-10">
 
-        <div
-            className="
-                min-h-screen
-                bg-gray-100
-                p-10
-            "
-        >
+            <div className="max-w-6xl mx-auto">
 
-            <div
-                className="
-                    max-w-2xl
-                    mx-auto
-                    bg-white
-                    p-10
-                    rounded-2xl
-                    shadow-xl
-                "
-            >
+                {/* HEADER */}
+                <div className="flex items-center justify-between mb-8">
 
-                <h1
-                    className="
-                        text-3xl
-                        font-bold
-                        mb-6
-                        text-center
-                    "
-                >
-                    Rate Limiter Dashboard
-                </h1>
-                <div
-    className="
-        flex
-        justify-between
-        items-center
-        mb-6
-    "
->
+                    <h1 className="text-2xl md:text-3xl font-bold text-slate-800">
+                        Rate Limiter Dashboard
+                    </h1>
 
-    <ThemeToggle />
+                    <ThemeToggle />
+                </div>
 
-</div>
+                {/* MAIN GRID */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-<div
-    className="
-        grid
-        grid-cols-2
-        gap-4
-        mb-6
-    "
->
+                    {/* LEFT CONTROL PANEL */}
+                    <div className="lg:col-span-4 space-y-5">
 
-    <StatsCard
-        title="Remaining Requests"
-        value={remainingRequests}
-    />
+                        {/* GLASS CARD */}
+                        <div className="backdrop-blur-xl bg-white/60 border border-white/40 shadow-lg rounded-2xl p-5">
 
-    <StatsCard
-        title="Current Algorithm"
-        value={selectedAlgorithm}
-    />
+                            <div className="grid grid-cols-2 gap-3 mb-4">
+                                <StatsCard
+                                    title="Remaining"
+                                    value={remainingRequests}
+                                />
 
-</div>
+                                <StatsCard
+                                    title="Algorithm"
+                                    value={selectedAlgorithm}
+                                />
+                            </div>
 
-<AlgorithmSelector
-    selectedAlgorithm={
-        selectedAlgorithm
-    }
+                            <AlgorithmSelector
+                                selectedAlgorithm={selectedAlgorithm}
+                                setSelectedAlgorithm={setSelectedAlgorithm}
+                            />
 
-    setSelectedAlgorithm={
-        setSelectedAlgorithm
-    }
-/>
-                <UserInput
-                    userId={userId}
-                    setUserId={setUserId}
-                    onSendRequest={
-                        handleRequest
-                    }
-                />
+                            <UserInput
+                                userId={userId}
+                                setUserId={setUserId}
+                                onSendRequest={handleRequest}
+                            />
 
-                {
-                    loading &&
-                    <LoadingSpinner />
-                }
+                            {loading && (
+                                <div className="flex justify-center py-4">
+                                    <LoadingSpinner />
+                                </div>
+                            )}
 
-                <ResponseCard
-                    message={message}
-                    status={status}
-                    remainingRequests={
-                        remainingRequests
-                    }
-                />
+                            <ResponseCard
+                                message={message}
+                                status={status}
+                                remainingRequests={remainingRequests}
+                            />
 
-                <RequestHistory
-                    history={history}
-                />
+                        </div>
+
+                        {/* HISTORY GLASS CARD */}
+                        <div className="backdrop-blur-xl bg-white/60 border border-white/40 shadow-lg rounded-2xl p-5">
+                            <RequestHistory history={history} />
+                        </div>
+
+                    </div>
+
+                    {/* RIGHT ANALYTICS PANEL */}
+                    <div className="lg:col-span-8 space-y-6">
+
+                        {metrics && (
+                            <>
+                                <div className="backdrop-blur-xl bg-white/60 border border-white/40 shadow-lg rounded-2xl p-5">
+                                    <OverviewCards metrics={metrics} />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div className="backdrop-blur-xl bg-white/60 border border-white/40 shadow-lg rounded-2xl p-5">
+                                        <StrategyComparisonChart metrics={metrics} />
+                                    </div>
+
+                                    <div className="backdrop-blur-xl bg-white/60 border border-white/40 shadow-lg rounded-2xl p-5">
+                                        <RequestDistributionChart metrics={metrics} />
+                                    </div>
+                                </div>
+
+                                <div className="backdrop-blur-xl bg-white/60 border border-white/40 shadow-lg rounded-2xl p-5">
+                                    <RequestTimelineChart
+                                        requestEvents={metrics?.requestEvents ?? []}
+                                    />
+                                </div>
+                            </>
+                        )}
+
+                    </div>
+
+                </div>
 
             </div>
-
         </div>
     )
 }

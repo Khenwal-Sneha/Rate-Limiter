@@ -1,47 +1,51 @@
 interface Props {
-
     title: string
-
-    value: string | number
+    value: React.ReactNode
 }
 
-function StatsCard({
-    title,
-    value
-}: Props) {
-
+function StatsCard({ title, value }: Props) {
     return (
+        <div className="
+            relative
+            bg-white/60
+            backdrop-blur-xl
+            border border-white/40
+            shadow-md
+            rounded-2xl
+            p-6
+            flex flex-col
+            gap-2
+            transition
+            hover:shadow-xl
+            hover:-translate-y-1
+            overflow-hidden
+        ">
 
-        <div
-            className="
-                bg-white
-                shadow-lg
-                rounded-2xl
-                p-6
-                flex
-                flex-col
-                items-center
-            "
-        >
+            {/* top gradient accent */}
+            <div className="
+                absolute top-0 left-0 right-0 h-1
+                bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-400
+                rounded-t-2xl
+            " />
 
-            <h2
-                className="
-                    text-gray-500
-                    text-sm
-                "
-            >
+            {/* Title */}
+            <h2 className="text-xs font-medium tracking-wide text-gray-500 uppercase">
                 {title}
             </h2>
 
-            <p
-                className="
-                    text-3xl
-                    font-bold
-                    mt-2
-                "
-            >
+            {/* Value (safe for text, numbers, JSX badges) */}
+            <div className="text-l font-semibold text-gray-800 truncate">
                 {value}
-            </p>
+            </div>
+
+            {/* soft glow */}
+            <div className="
+                absolute -bottom-10 -right-10
+                w-24 h-24
+                bg-blue-200/30
+                blur-2xl
+                rounded-full
+            " />
 
         </div>
     )

@@ -1,77 +1,191 @@
-import {
-    type RequestHistory as HistoryType
-} from "../types/RequestHistory"
+import { useState } from "react"
+import { type RequestHistory as HistoryType } from "../types/RequestHistory"
 
 interface Props {
-
     history: HistoryType[]
 }
 
-function RequestHistory({
-    history
-}: Props) {
+function RequestHistory({ history }: Props) {
+
+    const [showAll, setShowAll] = useState(false)
+
+    const getStatusStyle = (status: number) => {
+        if (status === 200) return "bg-green-100 text-green-700"
+        if (status === 429) return "bg-red-100 text-red-700"
+        return "bg-gray-100 text-gray-700"
+    }
+
+    const preview = history.slice(0, 6)
 
     return (
+        <div className="mt-10">
 
-        <div className="mt-8">
-
-            <h2
-                className="
-                    text-xl
-                    font-bold
-                    mb-4
-                "
-            >
-                Request History
+            {/* Header */}
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                Request Activity
             </h2>
 
-            <div className="space-y-3">
+            {/* Card */}
+            <div className="
+                divide-y divide-gray-200/60
+                bg-white/60
+                backdrop-blur-xl
+                border border-white/40
+                rounded-2xl
+                shadow-lg
+                overflow-hidden
+            ">
 
-                {
-                    history.map((item) => (
+                {/* Empty state */}
+                {history.length === 0 ? (
+                    <div className="p-6 text-sm text-gray-500">
+                        No requests yet
+                    </div>
+                ) : (
+                    <>
+                        {/* Preview list */}
+                        {preview.map((item) => (
+                            <div
+                                key={item.id}
+                                className="
+                                    flex
+                                    items-center
+                                    justify-between
+                                    px-5 py-4
+                                    hover:bg-white/70
+                                    transition
+                                "
+                            >
+                                {/* Left */}
+                                <div className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-3">
+                                        <span className="font-medium text-gray-800">
+                                            {item.userId}
+                                        </span>
 
-                        <div
-                            key={item.id}
-                            className="
-                                border
-                                p-3
-                                rounded-lg
-                            "
-                        >
+                                        <span className={`
+                                            text-xs px-2 py-0.5 rounded-full
+                                            ${getStatusStyle(item.status)}
+                                        `}>
+                                            {item.status}
+                                        </span>
+                                    </div>
 
-                            <p>
-                                User:
-                                {" "}
-                                {item.userId}
-                            </p>
+                                    <p className="text-sm text-gray-500 truncate max-w-md">
+                                        {item.message}
+                                    </p>
+                                </div>
 
-                            <p>
-                                Status:
-                                {" "}
-                                {item.status}
-                            </p>
+                                {/* Right */}
+                                <div className="text-xs text-gray-400 whitespace-nowrap">
+                                    {new Date(item.timestamp).toLocaleTimeString()}
+                                </div>
+                            </div>
+                        ))}
 
-                            <p>
-                                Message:
-                                {" "}
-                                {item.message}
-                            </p>
+                        {/* View all button */}
+                        {history.length > 6 && (
+                            <button
+                                onClick={() => setShowAll(true)}
+                                className="
+                                    w-full
+                                    text-sm
+                                    font-medium
+                                    text-indigo-600
+                                    hover:text-indigo-800
+                                    py-3
+                                    transition
+                                    bg-white/40
+                                "
+                            >
+                                View full history →
+                            </button>
+                        )}
+                    </>
+                )}
+            </div>
 
-                            <p>
-                                Time:
-                                {" "}
-                                {
-                                    new Date(
-                                        item.timestamp
-                                    ).toLocaleTimeString()
-                                }
-                            </p>
+            {/* MODAL */}
+            {showAll && (
+                <div className="
+                    fixed inset-0 z-50
+                    bg-black/30
+                    backdrop-blur-sm
+                    flex items-center justify-center
+                    p-4
+                ">
+
+                    <div className="
+                        w-full max-w-2xl
+                        bg-white/70
+                        backdrop-blur-xl
+                        border border-white/40
+                        rounded-2xl
+                        shadow-2xl
+                        overflow-hidden
+                    ">
+
+                        {/* Modal Header */}
+                        <div className="
+                            flex items-center justify-between
+                            p-5
+                            border-b border-gray-200/60
+                        ">
+                            <h2 className="text-lg font-semibold text-gray-800">
+                                Full Request History
+                            </h2>
+
+                            <button
+                                onClick={() => setShowAll(false)}
+                                className="text-gray-500 hover:text-black"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="max-h-[70vh] overflow-y-auto divide-y divide-gray-200/60">
+
+                            {history.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="
+                                        px-5 py-4
+                                        flex justify-between
+                                        hover:bg-white/60
+                                        transition
+                                    "
+                                >
+                                    <div>
+                                        <div className="flex gap-3 items-center">
+                                            <span className="font-medium text-gray-800">
+                                                {item.userId}
+                                            </span>
+
+                                            <span className={`
+                                                text-xs px-2 py-0.5 rounded-full
+                                                ${getStatusStyle(item.status)}
+                                            `}>
+                                                {item.status}
+                                            </span>
+                                        </div>
+
+                                        <p className="text-sm text-gray-500">
+                                            {item.message}
+                                        </p>
+                                    </div>
+
+                                    <span className="text-xs text-gray-400 whitespace-nowrap">
+                                        {new Date(item.timestamp).toLocaleTimeString()}
+                                    </span>
+                                </div>
+                            ))}
 
                         </div>
-                    ))
-                }
 
-            </div>
+                    </div>
+                </div>
+            )}
 
         </div>
     )

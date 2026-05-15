@@ -6,7 +6,6 @@ import RequestHistory from "./RequestHistory"
 import LoadingSpinner from "./LoadingSpinner"
 import StatsCard from "./StatsCard"
 import AlgorithmSelector from "./AlgorithmSelector"
-import ThemeToggle from "./ThemeToggle"
 
 import OverviewCards from "./metrics/OverviewCards"
 import StrategyComparisonChart from "./charts/StrategyComparisonChart"
@@ -34,7 +33,20 @@ function Dashboard() {
         sendRequest
     } = useRateLimiter()
 
-    const metrics = useUserMetrics(userId)
+    const emptyMetrics = {
+        totalAllowedRequests: 0,
+        totalBlockedRequests: 0,
+        strategyMetrics: {
+            FIXED_WINDOW: { allowedRequests: 0, blockedRequests: 0 },
+            SLIDING_WINDOW: { allowedRequests: 0, blockedRequests: 0 },
+            TOKEN_BUCKET: { allowedRequests: 0, blockedRequests: 0 }
+        },
+        requestEvents: []
+    }
+
+    const apiMetrics = useUserMetrics(userId)
+
+    const metrics = apiMetrics ?? emptyMetrics
 
     const handleRequest = () => {
         sendRequest(userId, selectedAlgorithm)
@@ -46,13 +58,10 @@ function Dashboard() {
             <div className="max-w-6xl mx-auto">
 
                 {/* HEADER */}
-                <div className="flex items-center justify-between mb-8">
-
+                <div className="mb-8">
                     <h1 className="text-2xl md:text-3xl font-bold text-slate-800">
                         Rate Limiter Dashboard
                     </h1>
-
-                    <ThemeToggle />
                 </div>
 
                 {/* MAIN GRID */}
@@ -61,7 +70,6 @@ function Dashboard() {
                     {/* LEFT CONTROL PANEL */}
                     <div className="lg:col-span-4 space-y-5">
 
-                        {/* GLASS CARD */}
                         <div className="backdrop-blur-xl bg-white/60 border border-white/40 shadow-lg rounded-2xl p-5">
 
                             <div className="grid grid-cols-2 gap-3 mb-4">
@@ -101,7 +109,6 @@ function Dashboard() {
 
                         </div>
 
-                        {/* HISTORY GLASS CARD */}
                         <div className="backdrop-blur-xl bg-white/60 border border-white/40 shadow-lg rounded-2xl p-5">
                             <RequestHistory history={history} />
                         </div>
@@ -111,30 +118,23 @@ function Dashboard() {
                     {/* RIGHT ANALYTICS PANEL */}
                     <div className="lg:col-span-8 space-y-6">
 
-                        {metrics && (
-                            <>
-                                <div className="backdrop-blur-xl bg-white/60 border border-white/40 shadow-lg rounded-2xl p-5">
-                                    <OverviewCards metrics={metrics} />
-                                </div>
+                    <div className="backdrop-blur-xl bg-white/60 border border-white/40 shadow-lg rounded-2xl p-5">
+    <OverviewCards metrics={metrics} />
+</div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    <div className="backdrop-blur-xl bg-white/60 border border-white/40 shadow-lg rounded-2xl p-5">
-                                        <StrategyComparisonChart metrics={metrics} />
-                                    </div>
+<div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <div className="backdrop-blur-xl bg-white/60 border border-white/40 shadow-lg rounded-2xl p-5">
+        <StrategyComparisonChart metrics={metrics} />
+    </div>
 
-                                    <div className="backdrop-blur-xl bg-white/60 border border-white/40 shadow-lg rounded-2xl p-5">
-                                        <RequestDistributionChart metrics={metrics} />
-                                    </div>
-                                </div>
+    <div className="backdrop-blur-xl bg-white/60 border border-white/40 shadow-lg rounded-2xl p-5">
+        <RequestDistributionChart metrics={metrics} />
+    </div>
+</div>
 
-                                <div className="backdrop-blur-xl bg-white/60 border border-white/40 shadow-lg rounded-2xl p-5">
-                                    <RequestTimelineChart
-                                        requestEvents={metrics?.requestEvents ?? []}
-                                    />
-                                </div>
-                            </>
-                        )}
-
+<div className="backdrop-blur-xl bg-white/60 border border-white/40 shadow-lg rounded-2xl p-5">
+    <RequestTimelineChart requestEvents={metrics.requestEvents} />
+</div>
                     </div>
 
                 </div>

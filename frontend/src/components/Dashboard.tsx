@@ -16,8 +16,25 @@ import {
     useRateLimiter
 } from "../hooks/useRateLimiter"
 
-function Dashboard() {
+import StatsCard
+    from "./StatsCard"
 
+import AlgorithmSelector
+    from "./AlgorithmSelector"
+
+import ThemeToggle
+    from "./ThemeToggle"
+
+import type {
+    AlgorithmType
+} from "../types/AlgorithmType"
+function Dashboard() {
+    const [
+        selectedAlgorithm,
+        setSelectedAlgorithm
+    ] = useState<AlgorithmType>(
+        "TOKEN_BUCKET"
+    )
     const [userId, setUserId] =
         useState("")
 
@@ -34,7 +51,7 @@ function Dashboard() {
 
     const handleRequest = () => {
 
-        sendRequest(userId)
+        sendRequest(userId,selectedAlgorithm)
     }
 
     return (
@@ -68,7 +85,49 @@ function Dashboard() {
                 >
                     Rate Limiter Dashboard
                 </h1>
+                <div
+    className="
+        flex
+        justify-between
+        items-center
+        mb-6
+    "
+>
 
+    <ThemeToggle />
+
+</div>
+
+<div
+    className="
+        grid
+        grid-cols-2
+        gap-4
+        mb-6
+    "
+>
+
+    <StatsCard
+        title="Remaining Requests"
+        value={remainingRequests}
+    />
+
+    <StatsCard
+        title="Current Algorithm"
+        value={selectedAlgorithm}
+    />
+
+</div>
+
+<AlgorithmSelector
+    selectedAlgorithm={
+        selectedAlgorithm
+    }
+
+    setSelectedAlgorithm={
+        setSelectedAlgorithm
+    }
+/>
                 <UserInput
                     userId={userId}
                     setUserId={setUserId}

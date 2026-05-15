@@ -1,5 +1,9 @@
 import { useState } from "react"
 
+import toast from "react-hot-toast"
+
+import axios from "axios"
+
 import {
     sendRateLimitedRequest
 } from "../services/rateLimiterApi"
@@ -7,6 +11,10 @@ import {
 import {
     type RequestHistory
 } from "../types/RequestHistory"
+
+import {
+    type AlgorithmType
+} from "../types/AlgorithmType"
 
 export function useRateLimiter() {
 
@@ -27,9 +35,44 @@ export function useRateLimiter() {
     const [history, setHistory] =
         useState<RequestHistory[]>([])
 
-    const sendRequest = async (
-        userId: string
+    const addHistoryItem = (
+        userId: string,
+        status: number,
+        message: string
     ) => {
+
+        const historyItem: RequestHistory = {
+
+            id: Date.now(),
+
+            userId,
+
+            status,
+
+            message,
+
+            timestamp: Date.now()
+        }
+
+        setHistory((prev) => [
+            historyItem,
+            ...prev
+        ])
+    }
+
+    const sendRequest = async (
+        userId: string,
+        algorithm: AlgorithmType
+    ) => {
+
+        if (!userId.trim()) {
+
+            toast.error(
+                "User ID is required"
+            )
+
+            return
+        }
 
         setLoading(true)
 
@@ -37,110 +80,103 @@ export function useRateLimiter() {
 
             const response =
                 await sendRateLimitedRequest(
-                    userId
+                    userId,
+                    algorithm
                 )
 
-            setMessage(
+            const successMessage =
                 response.data.message
-            )
 
-            setStatus(
+            const responseStatus =
                 response.status
-            )
 
-            setRemainingRequests(
+            const remaining =
                 Number(
                     response.headers[
                         "x-rate-limit-remaining"
                     ] || 0
                 )
+
+            setMessage(successMessage)
+
+            setStatus(responseStatus)
+
+            setRemainingRequests(
+                remaining
             )
 
-            const newHistoryItem = {
-
-                id: Date.now(),
-
+            addHistoryItem(
                 userId,
+                responseStatus,
+                successMessage
+            )
 
-                status: response.status,
+            toast.success(
+                "Request Allowed"
+            )
 
-                message:
-                    response.data.message,
+        } catch (error) {
 
-                timestamp: Date.now()
-            }
+            if (
+                axios.isAxiosError(error)
+                &&
+                error.response
+            ) {
 
-            setHistory((prev) => [
-                newHistoryItem,
-                ...prev
-            ])
+                const errorMessage =
 
-        } catch (error: any) {
+                    error.response.data
+                        ?.message
+                    ||
+                    "Request Failed"
 
-            if (error.response) {
-
-                setMessage(
-                    error.response.data.message
-                )
-
-                setStatus(
+                const errorStatus =
                     error.response.status
-                )
 
-                setRemainingRequests(
+                const remaining =
                     Number(
                         error.response.headers[
                             "x-rate-limit-remaining"
                         ] || 0
                     )
+
+                setMessage(errorMessage)
+
+                setStatus(errorStatus)
+
+                setRemainingRequests(
+                    remaining
                 )
 
-                const newHistoryItem = {
-
-                    id: Date.now(),
-
+                addHistoryItem(
                     userId,
+                    errorStatus,
+                    errorMessage
+                )
 
-                    status:
-                        error.response.status,
-
-                    message:
-                        error.response.data
-                            .message,
-
-                    timestamp: Date.now()
-                }
-
-                setHistory((prev) => [
-                    newHistoryItem,
-                    ...prev
-                ])
+                toast.error(
+                    errorMessage
+                )
 
             } else {
 
-                setMessage("Server Error")
+                setMessage(
+                    "Server Error"
+                )
 
                 setStatus(500)
 
                 setRemainingRequests(0)
 
-                const newHistoryItem = {
-
-                    id: Date.now(),
-
+                addHistoryItem(
                     userId,
+                    500,
+                    "Server Error"
+                )
 
-                    status: 500,
-
-                    message: "Server Error",
-
-                    timestamp: Date.now()
-                }
-
-                setHistory((prev) => [
-                    newHistoryItem,
-                    ...prev
-                ])
+                toast.error(
+                    "Server Error"
+                )
             }
 
         } finally {

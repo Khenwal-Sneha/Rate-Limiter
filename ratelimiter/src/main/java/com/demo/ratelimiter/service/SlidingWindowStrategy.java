@@ -4,10 +4,9 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
-import java.util.Set;
 
 @Service
-public class RateLimiterService3 {
+public class SlidingWindowStrategy implements com.demo.ratelimiter.strategy.RateLimitingStrategy {
 
     private static final int MAX_REQUESTS = 5;
 
@@ -16,7 +15,7 @@ public class RateLimiterService3 {
 
     private final StringRedisTemplate redisTemplate;
 
-    public RateLimiterService3(
+    public SlidingWindowStrategy(
             StringRedisTemplate redisTemplate
     ) {
         this.redisTemplate = redisTemplate;
@@ -64,7 +63,7 @@ public class RateLimiterService3 {
         return true;
     }
 
-    public int remainingReq(String userId) {
+    public int remainingRequests(String userId) {
 
         String key = "rate_limiter:" + userId;
 

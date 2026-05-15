@@ -4,8 +4,10 @@ import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import com.demo.ratelimiter.strategy.RateLimitingStrategy;
+
 @Service
-public class RateLimiterService {
+public class TokenBucketStrategy implements RateLimitingStrategy{
 
     @org.springframework.beans.factory.annotation.Value(
         "${rate.limit.capacity}"
@@ -19,7 +21,7 @@ public class RateLimiterService {
 
     private final StringRedisTemplate redisTemplate;
 
-    public RateLimiterService(
+    public TokenBucketStrategy(
             StringRedisTemplate redisTemplate
     ) {
         this.redisTemplate = redisTemplate;

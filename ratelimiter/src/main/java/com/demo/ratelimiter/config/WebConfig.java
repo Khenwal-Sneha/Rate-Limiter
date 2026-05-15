@@ -34,7 +34,7 @@ public class WebConfig
 
         registry.addMapping("/**")
                 .allowedOrigins(
-                        "https://your-vercel-url.vercel.app"
+                        "https://rate-limiter-h9oa.onrender.com"
                 )
                 .allowedMethods(
                         "GET",

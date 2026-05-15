@@ -4,6 +4,10 @@ import type {
     AlgorithmType
 } from "../types/AlgorithmType"
 
+const API_BASE_URL =
+    import.meta.env
+        .VITE_API_BASE_URL
+
 export const sendRateLimitedRequest =
     async (
         userId: string,
@@ -11,12 +15,16 @@ export const sendRateLimitedRequest =
     ) => {
 
         return axios.get(
-            `/api`,
+
+            `${API_BASE_URL}/api`,
+
             {
                 params: {
                     userId,
                     algorithm
-                }
+                },
+
+                timeout: 60000
             }
         )
     }

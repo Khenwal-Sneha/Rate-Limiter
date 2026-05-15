@@ -21,6 +21,9 @@ public class WebConfig
 
         registry.addInterceptor(
                 rateLimitInterceptor
+        )
+        .excludePathPatterns(
+                "/metrics"
         );
     }
 

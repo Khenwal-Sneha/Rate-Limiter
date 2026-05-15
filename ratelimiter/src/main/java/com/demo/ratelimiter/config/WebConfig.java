@@ -34,7 +34,7 @@ public class WebConfig
 
         registry.addMapping("/**")
                 .allowedOrigins(
-                        "http://localhost:5173"
+                        "https://your-vercel-url.vercel.app"
                 )
                 .allowedMethods(
                         "GET",
